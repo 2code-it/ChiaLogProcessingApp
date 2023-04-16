@@ -1,0 +1,71 @@
+﻿<Window x:Class="ChiaLogProcessingApp.Wpf.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChiaLogProcessingApp.Wpf"
+	   xmlns:c="clr-namespace:ChiaLogProcessingApp.Wpf.Converters"
+        mc:Ignorable="d"
+        Title="Chia log app" Height="450" Width="800">
+	<Window.Resources>
+		<Style x:Key="control1" TargetType="Control">
+			<Setter Property="Margin" Value="2" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Padding" Value="2" />
+		</Style>
+		<Style BasedOn="{StaticResource control1}" TargetType="TextBox" />
+		<Style BasedOn="{StaticResource control1}" TargetType="Label">
+			<Setter Property="Width" Value="120" />
+		</Style>
+		<Style BasedOn="{StaticResource control1}" TargetType="Button" />
+
+		<c:BooleanToTextConverter x:Key="boolToText" />
+		<c:BooleanInvertConverter x:Key="boolInvert" />
+
+	</Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="28" />
+			<RowDefinition Height="28" />
+			<RowDefinition Height="28" />
+			<RowDefinition Height="2*" />
+			<RowDefinition Height="1*" />
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="124" />
+			<ColumnDefinition Width="*" />
+		</Grid.ColumnDefinitions>
+
+		<Menu Grid.Row="0" Grid.ColumnSpan="2" Padding="4">
+			<MenuItem Header="File">
+				<MenuItem Header="Browse log file" Command="{Binding BrowseLogFileCommand}" IsEnabled="{Binding IsWatchingLogFile, Converter={StaticResource boolInvert}}" />
+				<MenuItem Header="Enable http server" IsCheckable="True"  IsChecked="{Binding IsHttpListening, Mode=OneWay}" Command="{Binding ToggleHttpServiceCommand}" />
+				<MenuItem Header="Enable file watcher" IsCheckable="True" IsChecked="{Binding IsWatchingLogFile, Mode=OneWay}" Command="{Binding ToggleWatchLogFileCommand}" />
+			</MenuItem>
+		</Menu>
+		
+		<Label Grid.Row="1" Grid.Column="0" Content="Chia log file" />
+		<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ChiaLogFilePath}" IsEnabled="{Binding IsWatchingLogFile, Converter={StaticResource boolInvert}}" />
+		
+		<Label Grid.Row="2" Grid.Column="0" Content="Http binding" />
+		<TextBox Grid.Row="2" Grid.Column="1" Text="{Binding HttpBindingUrl}" IsEnabled="{Binding IsHttpListening, Converter={StaticResource boolInvert}}" />
+		
+		<DataGrid Grid.Row="3" Grid.ColumnSpan="4" ItemsSource="{Binding LogEntries}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False">
+			<DataGrid.Columns>
+				<DataGridTextColumn Width="140" Header="Created" Binding="{Binding Created, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}" />
+				<DataGridTextColumn Width="100" Header="Severity" Binding="{Binding Severity}" />
+				<DataGridTextColumn Width="120" Header="Source" Binding="{Binding Source}" />
+				<DataGridTextColumn Width="100" Header="Address" Binding="{Binding RemoteAddress}" />
+				<DataGridTextColumn Width="*" Header="Body" Binding="{Binding Body}" />
+			</DataGrid.Columns>
+		</DataGrid>
+		
+		<DataGrid Grid.Row="4" Grid.ColumnSpan="4" ItemsSource="{Binding UserLogEntries}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False">
+			<DataGrid.Columns>
+				<DataGridTextColumn Width="140" Header="Created" Binding="{Binding Created, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}" />
+				<DataGridTextColumn Width="100" Header="Severity" Binding="{Binding Severity}" />
+				<DataGridTextColumn Width="*" Header="Message" Binding="{Binding Message}" />
+			</DataGrid.Columns>
+		</DataGrid>
+	</Grid>
+</Window>
