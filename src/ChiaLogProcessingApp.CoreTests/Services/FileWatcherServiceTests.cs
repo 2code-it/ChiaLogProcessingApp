@@ -6,19 +6,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
-using Moq;
+using NSubstitute;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 
 namespace ChiaLogProcessingApp.Core.Services.Tests
 {
-	[TestClass()]
+	[TestClass]
 	public class FileWatcherServiceTests
 	{
-		private Mock<IFileSystemService> _fileSystemServiceMock = new Mock<IFileSystemService>();
-		private Mock<IMessenger> _messengerMock = new Mock<IMessenger>();
+		public FileWatcherServiceTests() 
+		{
+			 _filename = _fileSystemService.PathGetFullPath("./test.txt");
+		}
 
-		private static readonly string _filename = ".\\test.txt";
+		private IFileSystemService _fileSystemServiceMock = Substitute.For<IFileSystemService>();
+		private IMessenger _messengerMock = Substitute.For<IMessenger>();
+		private IFileSystemService _fileSystemService = new FileSystemService();
+
+		private readonly string _filename;
 
 		[TestMethod, ExpectedException(typeof(InvalidOperationException))]
 		public void Watch_WhenAlreadyWatching_ShouldThrowException()
@@ -26,7 +32,7 @@ namespace ChiaLogProcessingApp.Core.Services.Tests
 			ResetMocks();
 			ResetFile();
 			IFileSystemService fileSystemService = new Services.FileSystemService();
-			IFileWatcherService fileWatcherService = new Services.FileWatcherService(fileSystemService, _messengerMock.Object);
+			IFileWatcherService fileWatcherService = new Services.FileWatcherService(fileSystemService, _messengerMock);
 
 			fileWatcherService.Watch(_filename);
 			fileWatcherService.Watch(_filename);
@@ -36,8 +42,8 @@ namespace ChiaLogProcessingApp.Core.Services.Tests
 		public void Watch_WhenFileNotExists_ShouldThrowException()
 		{
 			ResetMocks();
-			_fileSystemServiceMock.Setup(x=>x.FileExists(It.IsAny<string>())).Returns(false);
-			IFileWatcherService fileWatcherService = new Services.FileWatcherService(_fileSystemServiceMock.Object, _messengerMock.Object);
+			_fileSystemServiceMock.FileExists(Arg.Any<string>()).Returns(false);
+			IFileWatcherService fileWatcherService = new Services.FileWatcherService(_fileSystemServiceMock, _messengerMock);
 
 			fileWatcherService.Watch(_filename);
 		}
@@ -47,37 +53,31 @@ namespace ChiaLogProcessingApp.Core.Services.Tests
 		{
 			ResetMocks();
 			ResetFile();
-			string? result = null;
 			string input = "line 1";
 			byte[]? data = null;
-			_messengerMock.Setup(x => x.Send(It.IsAny<Models.FileAppendedMessage>(), It.IsAny<int>()))
-				.Callback<Models.FileAppendedMessage, int>((m,i) => data = m.AppendedData);
+			_messengerMock.Send(Arg.Do<Models.FileAppendedMessage>(x => data = x.AppendedData), Arg.Any<int>());
 
 			IFileSystemService fileSystemService = new Services.FileSystemService();
-			IFileWatcherService fileWatcherService = new Services.FileWatcherService(fileSystemService, _messengerMock.Object);
+			IFileWatcherService fileWatcherService = new Services.FileWatcherService(fileSystemService, _messengerMock);
 
 			fileWatcherService.Watch(_filename);
-			File.AppendAllLines(_filename, new string[] { input });
+			_fileSystemService.FileAppendAllLines(_filename, new string[] { input });
 			Thread.Sleep(200);
-			File.AppendAllLines(_filename, new string[] { input });
+			_fileSystemService.FileAppendAllLines(_filename, new string[] { input });
 			Thread.Sleep(200);
 
 			fileWatcherService.Unwatch();
 
-			_messengerMock.Verify(x => x.Send(It.IsAny<Models.FileAppendedMessage>(), It.IsAny<int>()), Times.Exactly(2));
-			if(data != null)
-			{
-				result = Encoding.UTF8.GetString(data).Trim();
-			}
-			
+			_messengerMock.Received(2).Send(Arg.Any<Models.FileAppendedMessage>(), Arg.Any<int>());
+			string? result = data is null ? null : Encoding.UTF8.GetString(data).Trim();
 
 			Assert.AreEqual(input, result);
 		}
 
 		private void ResetMocks()
 		{
-			_fileSystemServiceMock = new Mock<IFileSystemService>();
-			_messengerMock = new Mock<IMessenger>();
+			_fileSystemServiceMock = Substitute.For<IFileSystemService>();
+			_messengerMock = Substitute.For<IMessenger>();
 		}
 
 		private void ResetFile()

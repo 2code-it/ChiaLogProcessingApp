@@ -6,20 +6,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ChiaLogProcessingApp.Core.Services;
-using Moq;
+using NSubstitute;
 
 namespace ChiaLogProcessingApp.Core.Assets.Tests
 {
-	[TestClass()]
+	[TestClass]
 	public class WarningsProcessorTests
 	{
 		[TestMethod()]
 		public void Run_WhenSourceIsSetAndBodyContains_ExpectAppendToWarningsFile()
 		{
 			IEnumerable<string> contents = new string[] { };
-			Mock<IFileSystemService> fileSystemServiceMock = new Mock<IFileSystemService>();
-			fileSystemServiceMock.Setup(x => x.FileAppendAllLines(It.IsAny<string>(), It.IsAny<IEnumerable<string>>())).Callback<string, IEnumerable<string>>((f, c) => contents = c);
-			Assets.WarningsProcessor warningsProcessor = new WarningsProcessor(fileSystemServiceMock.Object);
+			IFileSystemService fsMock = Substitute.For<IFileSystemService>();
+			fsMock.FileAppendAllLines(Arg.Any<string>(), Arg.Do<IEnumerable<string>>(x => contents = x));
+			Assets.WarningsProcessor warningsProcessor = new WarningsProcessor(fsMock);
 			Models.LogEntry logEntry = new Models.LogEntry();
 			logEntry.Source = "harvester";
 			logEntry.Body = "Looking up qualities took too long";
@@ -29,13 +29,13 @@ namespace ChiaLogProcessingApp.Core.Assets.Tests
 			Assert.AreEqual(1, contents.Count());
 		}
 
-		[TestMethod()]
+		[TestMethod]
 		public void Run_WhenSourceIsNotSetAndBodyContains_ExpectAppendToWarningsFile()
 		{
 			IEnumerable<string> contents = new string[] { };
-			Mock<IFileSystemService> fileSystemServiceMock = new Mock<IFileSystemService>();
-			fileSystemServiceMock.Setup(x => x.FileAppendAllLines(It.IsAny<string>(), It.IsAny<IEnumerable<string>>())).Callback<string, IEnumerable<string>>((f, c) => contents = c);
-			Assets.WarningsProcessor warningsProcessor = new WarningsProcessor(fileSystemServiceMock.Object);
+			IFileSystemService fsMock = Substitute.For<IFileSystemService>();
+			fsMock.FileAppendAllLines(Arg.Any<string>(), Arg.Do<IEnumerable<string>>(x => contents = x));
+			Assets.WarningsProcessor warningsProcessor = new WarningsProcessor(fsMock);
 			Models.LogEntry logEntry = new Models.LogEntry();
 			
 			logEntry.Body = "Looking up qualities took too long";

@@ -63,6 +63,11 @@ namespace ChiaLogProcessingApp.Core.Services
 			return directoryName;
 		}
 
+		public string PathGetFullPath(string path)
+		{
+			return Path.GetFullPath(path, AppDomain.CurrentDomain.BaseDirectory);
+		}
+
 		public long GetFileSize(string path)
 		{
 			FileInfo fileInfo = new FileInfo(path);

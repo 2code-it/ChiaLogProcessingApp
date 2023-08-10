@@ -17,6 +17,7 @@ namespace ChiaLogProcessingApp.Core.Services
 		string GetFolderPathUserProfile();
 		string PathGetFileName(string path);
 		string PathGetDirectoryName(string path);
+		string PathGetFullPath(string path);
 		long GetFileSize(string path);
 		byte[] FilePartialRead(string path, long start, int length = 0);
 	}
